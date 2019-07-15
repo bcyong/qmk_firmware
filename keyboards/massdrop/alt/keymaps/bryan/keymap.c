@@ -2,6 +2,10 @@
 
 #include <print.h>
 
+#define _BL 0
+#define _FL 1
+#define _ML 2
+
 enum alt_keycodes {
     U_T_AUTO = SAFE_RANGE, //USB Extra Port Toggle Auto Detect / Always Active
     U_T_AGCR,              //USB Toggle Automatic GCR control
@@ -41,21 +45,21 @@ void btn1btn2_reset (qk_tap_dance_state_t *state, void *user_data);
 keymap_config_t keymap_config;
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [0] = LAYOUT(
+    [_BL] = LAYOUT(
         KC_ESC,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS, KC_EQL,  KC_BSPC, KC_DEL,  \
         KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC, KC_RBRC, KC_BSLS, KC_HOME, \
         KC_LGUI, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,          KC_ENT,  KC_PGUP, \
         KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,          KC_UP,   KC_PGDN, \
-        KC_LCTL, MO(1),   KC_LALT,                            KC_SPC,                             KC_RALT, MO(1),   KC_LEFT, KC_DOWN, KC_RGHT  \
+        KC_LCTL, MO(_FL), KC_LALT,                            KC_SPC,                             KC_RALT, MO(_FL), KC_LEFT, KC_DOWN, KC_RGHT  \
     ),
-    [1] = LAYOUT(
+    [_FL] = LAYOUT(
         KC_GRV,  KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,  _______, KC_MUTE, \
         _______, RGB_SPD, RGB_VAI, RGB_SPI, RGB_HUI, RGB_SAI, _______, KC_HOME, KC_UP,   KC_PGUP, KC_PSCR, KC_SLCK, KC_PAUS, _______, KC_END, \
         _______, RGB_RMOD,RGB_VAD, RGB_MOD, RGB_HUD, RGB_SAD, _______, KC_LEFT, KC_DOWN, KC_RGHT, _______, _______,          _______, KC_VOLU, \
         _______, RGB_TOG, _______, _______, _______, MD_BOOT, TG_NKRO, KC_END,  _______, KC_PGDN, _______, _______,          KC_PGUP, KC_VOLD, \
-        _______, _______, MO(2),                              _______,                            _______, _______, KC_HOME, KC_PGDN, KC_END  \
+        _______, _______, MO(_ML),                            _______,                            _______, _______, KC_HOME, KC_PGDN, KC_END   \
     ),
-    [2] = LAYOUT(
+    [_ML] = LAYOUT(
         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_MS_U, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_MS_L, KC_MS_D, KC_MS_R, XXXXXXX, XXXXXXX,          XXXXXXX, XXXXXXX, \
@@ -68,8 +72,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 // Runs just one time when the keyboard initializes.
 void matrix_init_user(void) {
     rgb_matrix_set_flags(LED_FLAG_KEYLIGHT);
-    rgb_matrix_set_color_all(0, 0, 0);
-    rgb_matrix_mode(RGB_MATRIX_SOLID_REACTIVE_SIMPLE);
+    rgb_matrix_sethsv_noeeprom(HSV_PURPLE);
+    rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_REACTIVE_SIMPLE);
 };
 
 // Runs constantly in the background, in a loop.
@@ -172,33 +176,74 @@ int cur_dance (qk_tap_dance_state_t *state) {
 
 void btn1btn2_finished (qk_tap_dance_state_t *state, void *user_data) {
     td_state = cur_dance(state);
-        switch (td_state) {
-    case SINGLE_TAP:
-        register_code16(KC_BTN1);
-        break;
-    case DOUBLE_TAP:
-        register_code16(KC_BTN2);
-        break;
-    case TRIPLE_TAP:
-        register_code16(KC_BTN3);
-  }
+    switch (td_state) {
+        case SINGLE_TAP:
+            register_code16(KC_BTN1);
+            break;
+        case DOUBLE_TAP:
+            register_code16(KC_BTN2);
+            break;
+        case TRIPLE_TAP:
+            register_code16(KC_BTN3);
+            break;
+        default:
+            break;
+    }
 }
 
 void btn1btn2_reset (qk_tap_dance_state_t *state, void *user_data) {
     switch (td_state) {
         case SINGLE_TAP:
-        unregister_code16(KC_BTN1);
-        break;
-    case DOUBLE_TAP:
-        unregister_code16(KC_BTN2);
-        break;
-    case TRIPLE_TAP:
-        unregister_code16(KC_BTN3);
-        break;
-  }
+            unregister_code16(KC_BTN1);
+            break;
+        case DOUBLE_TAP:
+            unregister_code16(KC_BTN2);
+            break;
+        case TRIPLE_TAP:
+            unregister_code16(KC_BTN3);
+            break;
+        default:
+            break;
+    }
 }
 
 // Define `ACTION_TAP_DANCE_FN_ADVANCED()` for each tapdance keycode, passing in `finished` and `reset` functions
 qk_tap_dance_action_t tap_dance_actions[] = {
     [BTN1_BTN2] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, btn1btn2_finished, btn1btn2_reset)
 };
+
+uint32_t layer_state_set_user(uint32_t state) {
+    print("entering layer_state_set_user\n");
+    switch (biton32(state)) {
+        case _BL:
+            print("base layer\n");
+            rgb_matrix_sethsv_noeeprom(HSV_PURPLE);
+            rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_REACTIVE_SIMPLE);
+            break;
+        case _FL:
+            print("func layer\n");
+            rgb_matrix_sethsv_noeeprom(0, 0, 0);
+            rgb_matrix_mode_noeeprom(RGB_MATRIX_NONE);
+            rgb_matrix_set_color(23, 255, 255, 255);
+            rgb_matrix_set_color(37, 255, 255, 255);
+            rgb_matrix_set_color(38, 255, 255, 255);
+            rgb_matrix_set_color(39, 255, 255, 255);
+            rgb_matrix_set_color(24, 255, 0, 0);
+            rgb_matrix_set_color(53, 255, 0, 0);
+            break;
+        case _ML:
+            print("mouse layer\n");
+            rgb_matrix_sethsv_noeeprom(0, 0, 0);
+            rgb_matrix_mode_noeeprom(RGB_MATRIX_NONE);
+            rgb_matrix_set_color(23, 0, 255, 255);
+            rgb_matrix_set_color(37, 0, 255, 255);
+            rgb_matrix_set_color(38, 0, 255, 255);
+            rgb_matrix_set_color(39, 0, 255, 255);
+            rgb_matrix_set_color(61, 0, 255, 255);
+            break;
+        default:
+            print("default\n");
+            break;
+        }
+    return state;
+}
