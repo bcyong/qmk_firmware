@@ -12,6 +12,29 @@ enum alt_keycodes {
 
 #define TG_NKRO MAGIC_TOGGLE_NKRO //Toggle 6KRO / NKRO mode
 
+// Tapdance Keycodes
+enum td_keycodes {
+  BTN1_BTN2 // BTN1 when tapped, BTN2 when held
+};
+
+// Tapdance States
+typedef enum {
+  SINGLE_TAP,
+  DOUBLE_TAP,
+} td_state_t;
+
+// create a global instance of the tapdance state type
+static td_state_t td_state;
+
+// Tapdance Functions
+
+// Function to determine the current tapdance state
+int cur_dance (qk_tap_dance_state_t *state);
+
+// `finished` and `reset` functions for each tapdance keycode
+void btn1btn2_finished (qk_tap_dance_state_t *state, void *user_data);
+void btn1btn2_reset (qk_tap_dance_state_t *state, void *user_data);
+
 keymap_config_t keymap_config;
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -34,7 +57,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_MS_U, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_MS_L, KC_MS_D, KC_MS_R, XXXXXXX, XXXXXXX,          XXXXXXX, XXXXXXX, \
         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,          XXXXXXX, XXXXXXX, \
-        XXXXXXX, XXXXXXX, XXXXXXX,                            XXXXXXX,                            XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX  \
+        XXXXXXX, XXXXXXX, _______,                      TD(BTN1_BTN2),                            XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX  \
     ),
     
 };
@@ -124,3 +147,46 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             return true; //Process all other keycodes normally
     }
 }
+
+
+
+// Determine the tapdance state to return
+int cur_dance (qk_tap_dance_state_t *state) {
+  if (state->count == 1) {
+    return SINGLE_TAP;
+  } 
+  else if (state->count == 2) {
+    return DOUBLE_TAP;
+  }
+  else { return 2; } // any number higher than the maximum state value you return above
+}
+
+// Handle the possible states for each tapdance keycode you define:
+
+void btn1btn2_finished (qk_tap_dance_state_t *state, void *user_data) {
+  td_state = cur_dance(state);
+  switch (td_state) {
+    case SINGLE_TAP:
+      register_code16(KC_BTN1);
+      break;
+    case DOUBLE_TAP:
+      register_code16(KC_BTN2);
+      break;
+  }
+}
+
+void btn1btn2_reset (qk_tap_dance_state_t *state, void *user_data) {
+  switch (td_state) {
+    case SINGLE_TAP:
+      unregister_code16(KC_BTN1);
+      break;
+    case DOUBLE_TAP:
+      unregister_code16(KC_BTN2);
+      break;
+  }
+}
+
+// Define `ACTION_TAP_DANCE_FN_ADVANCED()` for each tapdance keycode, passing in `finished` and `reset` functions
+qk_tap_dance_action_t tap_dance_actions[] = {
+  [BTN1_BTN2] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, btn1btn2_finished, btn1btn2_reset)
+};
