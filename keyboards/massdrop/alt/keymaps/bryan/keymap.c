@@ -1,5 +1,7 @@
 #include QMK_KEYBOARD_H
 
+#include <print.h>
+
 enum alt_keycodes {
     U_T_AUTO = SAFE_RANGE, //USB Extra Port Toggle Auto Detect / Always Active
     U_T_AGCR,              //USB Toggle Automatic GCR control
@@ -14,13 +16,14 @@ enum alt_keycodes {
 
 // Tapdance Keycodes
 enum td_keycodes {
-  BTN1_BTN2 // BTN1 when tapped, BTN2 when held
+    BTN1_BTN2 // BTN1 when tapped, BTN2 when held
 };
 
 // Tapdance States
 typedef enum {
-  SINGLE_TAP,
-  DOUBLE_TAP,
+    SINGLE_TAP,
+    DOUBLE_TAP,
+    TRIPLE_TAP,
 } td_state_t;
 
 // create a global instance of the tapdance state type
@@ -151,45 +154,51 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
 }
 
-
-
 // Determine the tapdance state to return
 int cur_dance (qk_tap_dance_state_t *state) {
-  if (state->count == 1) {
-    return SINGLE_TAP;
-  } 
-  else if (state->count == 2) {
-    return DOUBLE_TAP;
-  }
-  else { return 2; } // any number higher than the maximum state value you return above
+    if (state->count == 1) {
+        return SINGLE_TAP;
+    } 
+    else if (state->count == 2) {
+        return DOUBLE_TAP;
+    }
+    else if (state->count == 3) {
+        return TRIPLE_TAP;
+    }
+    else { return 3; } // any number higher than the maximum state value you return above
 }
 
 // Handle the possible states for each tapdance keycode you define:
 
 void btn1btn2_finished (qk_tap_dance_state_t *state, void *user_data) {
-  td_state = cur_dance(state);
-  switch (td_state) {
+    td_state = cur_dance(state);
+        switch (td_state) {
     case SINGLE_TAP:
-      register_code16(KC_BTN1);
-      break;
+        register_code16(KC_BTN1);
+        break;
     case DOUBLE_TAP:
-      register_code16(KC_BTN2);
-      break;
+        register_code16(KC_BTN2);
+        break;
+    case TRIPLE_TAP:
+        register_code16(KC_BTN3);
   }
 }
 
 void btn1btn2_reset (qk_tap_dance_state_t *state, void *user_data) {
-  switch (td_state) {
-    case SINGLE_TAP:
-      unregister_code16(KC_BTN1);
-      break;
+    switch (td_state) {
+        case SINGLE_TAP:
+        unregister_code16(KC_BTN1);
+        break;
     case DOUBLE_TAP:
-      unregister_code16(KC_BTN2);
-      break;
+        unregister_code16(KC_BTN2);
+        break;
+    case TRIPLE_TAP:
+        unregister_code16(KC_BTN3);
+        break;
   }
 }
 
 // Define `ACTION_TAP_DANCE_FN_ADVANCED()` for each tapdance keycode, passing in `finished` and `reset` functions
 qk_tap_dance_action_t tap_dance_actions[] = {
-  [BTN1_BTN2] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, btn1btn2_finished, btn1btn2_reset)
+    [BTN1_BTN2] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, btn1btn2_finished, btn1btn2_reset)
 };
