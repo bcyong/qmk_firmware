@@ -1,10 +1,8 @@
 #include QMK_KEYBOARD_H
-
+#include "process_unicode.h"
 #include <print.h>
-
-#define _BL 0
-#define _FL 1
-#define _ML 2
+#include "rgblight.h"
+#include "common.h"
 
 enum alt_keycodes {
     U_T_AUTO = SAFE_RANGE, //USB Extra Port Toggle Auto Detect / Always Active
@@ -16,11 +14,23 @@ enum alt_keycodes {
     MD_BOOT,               //Restart into bootloader after hold timeout
 };
 
+enum alt_layers {
+    _BL = 0,
+    _FL,
+    _ML,
+};
+
+#define KEY_COLOR_OFF 0x00, 0x00, 0x00
+#define KEY_COLOR_HOMEEND RGB_CORAL
+#define KEY_COLOR_ARROWS RGB_PURPLE
+#define KEY_COLOR_PAGEUPDN RGB_MAGENTA
+#define KEY_COLOR_MOUSE RGB_GOLD
+
 #define TG_NKRO MAGIC_TOGGLE_NKRO //Toggle 6KRO / NKRO mode
 
 // Tapdance Keycodes
 enum td_keycodes {
-    BTN1_BTN2 // BTN1 when tapped, BTN2 when held
+    SPC_MBTN // BTN1/BTN2/BTN3 when tapped 1/2/3 times
 };
 
 // Tapdance States
@@ -39,8 +49,8 @@ static td_state_t td_state;
 int cur_dance (qk_tap_dance_state_t *state);
 
 // `finished` and `reset` functions for each tapdance keycode
-void btn1btn2_finished (qk_tap_dance_state_t *state, void *user_data);
-void btn1btn2_reset (qk_tap_dance_state_t *state, void *user_data);
+void spc_mbtn_finished (qk_tap_dance_state_t *state, void *user_data);
+void spc_mbtn_reset (qk_tap_dance_state_t *state, void *user_data);
 
 keymap_config_t keymap_config;
 
@@ -56,7 +66,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_GRV,  KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,  _______, KC_MUTE, \
         _______, RGB_SPD, RGB_VAI, RGB_SPI, RGB_HUI, RGB_SAI, _______, KC_HOME, KC_UP,   KC_PGUP, KC_PSCR, KC_SLCK, KC_PAUS, _______, KC_END, \
         _______, RGB_RMOD,RGB_VAD, RGB_MOD, RGB_HUD, RGB_SAD, _______, KC_LEFT, KC_DOWN, KC_RGHT, _______, _______,          _______, KC_VOLU, \
-        _______, RGB_TOG, _______, _______, _______, MD_BOOT, TG_NKRO, KC_END,  _______, KC_PGDN, _______, _______,          KC_PGUP, KC_VOLD, \
+        _______, RGB_TOG, _______, _______, _______, MD_BOOT, _______, KC_END,  _______, KC_PGDN, _______, _______,          KC_PGUP, KC_VOLD, \
         _______, _______, MO(_ML),                            _______,                            _______, _______, KC_HOME, KC_PGDN, KC_END   \
     ),
     [_ML] = LAYOUT(
@@ -64,16 +74,16 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_MS_U, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_MS_L, KC_MS_D, KC_MS_R, XXXXXXX, XXXXXXX,          XXXXXXX, XXXXXXX, \
         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,          XXXXXXX, XXXXXXX, \
-        XXXXXXX, XXXXXXX, _______,                      TD(BTN1_BTN2),                            XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX  \
+        XXXXXXX, XXXXXXX, _______,                       TD(SPC_MBTN),                            XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX  \
     ),
     
 };
 
 // Runs just one time when the keyboard initializes.
 void matrix_init_user(void) {
-    rgb_matrix_set_flags(LED_FLAG_KEYLIGHT);
-    rgb_matrix_sethsv_noeeprom(HSV_PURPLE);
-    rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_REACTIVE_SIMPLE);
+    rgb_matrix_set_flags(LED_FLAG_UNDERGLOW);
+    rgb_matrix_sethsv(HSV_PURPLE);
+    rgb_matrix_mode(RGB_MATRIX_SOLID_REACTIVE_SIMPLE);
 };
 
 // Runs constantly in the background, in a loop.
@@ -84,10 +94,70 @@ void matrix_scan_user(void) {
 #define MODS_CTRL  (get_mods() & MOD_BIT(KC_LCTL) || get_mods() & MOD_BIT(KC_RCTRL))
 #define MODS_ALT  (get_mods() & MOD_BIT(KC_LALT) || get_mods() & MOD_BIT(KC_RALT))
 
+bool fn_down = false;
+bool alt_down = false;
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static uint32_t key_timer;
 
     switch (keycode) {
+        case MO(_FL):
+            fn_down = record->event.pressed;
+            break;
+
+        case MO(_ML):
+            alt_down = record->event.pressed;
+            break;
+
+        default:
+            break;
+    }
+
+    if (fn_down && alt_down) {
+        uint8_t keys_homeend[] = {KL_U, KL_M};
+        foreach (uint8_t* key, keys_homeend) {
+            rgb_matrix_set_color(*key, KEY_COLOR_OFF);
+        };
+        uint8_t keys_arrow[] = {KL_I, KL_J, KL_K, KL_L};
+        foreach (uint8_t* key, keys_arrow) {
+            rgb_matrix_set_color(*key, KEY_COLOR_OFF);
+        };
+        uint8_t keys_page[] = {KL_O, KL_DOT};
+        foreach (uint8_t* key, keys_page) {
+            rgb_matrix_set_color(*key, KEY_COLOR_OFF);
+        };
+
+        uint8_t keys_mouse[] = {KL_I, KL_J, KL_K, KL_L, KL_SPC};
+        foreach (uint8_t* key, keys_mouse) {
+            rgb_matrix_set_color(*key, KEY_COLOR_MOUSE);
+        };
+    } else if (fn_down) {
+        uint8_t keys_mouse[] = {KL_I, KL_J, KL_K, KL_L, KL_SPC};
+        foreach (uint8_t* key, keys_mouse) {
+            rgb_matrix_set_color(*key, KEY_COLOR_OFF);
+        };
+
+        uint8_t keys_homeend[] = {KL_U, KL_M};
+        foreach (uint8_t* key, keys_homeend) {
+            rgb_matrix_set_color(*key, KEY_COLOR_HOMEEND);
+        };
+        uint8_t keys_arrow[] = {KL_I, KL_J, KL_K, KL_L};
+        foreach (uint8_t* key, keys_arrow) {
+            rgb_matrix_set_color(*key, KEY_COLOR_ARROWS);
+        };
+        uint8_t keys_page[] = {KL_O, KL_DOT};
+        foreach (uint8_t* key, keys_page) {
+            rgb_matrix_set_color(*key, KEY_COLOR_PAGEUPDN);
+        };
+    } else {
+        uint8_t keys_all[] = {KEYBOARD_ALL};
+        foreach (uint8_t* key, keys_all) {
+            rgb_matrix_set_color(*key, KEY_COLOR_OFF);
+        };
+    }
+
+    switch (keycode) {
+        /* Massdrop debug */
         case U_T_AUTO:
             if (record->event.pressed && MODS_SHIFT && MODS_CTRL) {
                 TOGGLE_FLAG_AND_PRINT(usb_extra_manual, "USB extra port manual mode");
@@ -128,29 +198,29 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
             return false;
         case RGB_TOG:
-            if (record->event.pressed) {
-              switch (rgb_matrix_get_flags()) {
-                case LED_FLAG_ALL: {
-                    rgb_matrix_set_flags(LED_FLAG_KEYLIGHT);
-                    rgb_matrix_set_color_all(0, 0, 0);
-                  }
-                  break;
-                case LED_FLAG_KEYLIGHT: {
-                    rgb_matrix_set_flags(LED_FLAG_UNDERGLOW);
-                    rgb_matrix_set_color_all(0, 0, 0);
-                  }
-                  break;
-                case LED_FLAG_UNDERGLOW: {
-                    rgb_matrix_set_flags(LED_FLAG_NONE);
-                    rgb_matrix_disable_noeeprom();
-                  }
-                  break;
-                default: {
-                    rgb_matrix_set_flags(LED_FLAG_ALL);
-                    rgb_matrix_enable_noeeprom();
-                  }
-                  break;
-              }
+            if (record->event.pressed) {            
+                switch (rgb_matrix_get_flags()) {
+                    case LED_FLAG_ALL: {
+                        rgb_matrix_set_flags(LED_FLAG_KEYLIGHT);
+                        rgb_matrix_set_color_all(0, 0, 0);
+                    }
+                    break;
+                    case LED_FLAG_KEYLIGHT: {
+                        rgb_matrix_set_flags(LED_FLAG_UNDERGLOW);
+                        rgb_matrix_set_color_all(0, 0, 0);
+                    }
+                    break;
+                    case LED_FLAG_UNDERGLOW: {
+                        rgb_matrix_set_flags(LED_FLAG_NONE);
+                        rgb_matrix_disable_noeeprom();
+                    }
+                    break;
+                    default: {
+                        rgb_matrix_set_flags(LED_FLAG_ALL);
+                        rgb_matrix_enable_noeeprom();
+                    }
+                    break;
+                }
             }
             return false;
         default:
@@ -162,19 +232,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 int cur_dance (qk_tap_dance_state_t *state) {
     if (state->count == 1) {
         return SINGLE_TAP;
-    } 
-    else if (state->count == 2) {
+    } else if (state->count == 2) {
         return DOUBLE_TAP;
-    }
-    else if (state->count == 3) {
+    } else if (state->count == 3) {
         return TRIPLE_TAP;
+    } else {
+         return 3; // any number higher than the maximum state value you return above
     }
-    else { return 3; } // any number higher than the maximum state value you return above
 }
 
 // Handle the possible states for each tapdance keycode you define:
 
-void btn1btn2_finished (qk_tap_dance_state_t *state, void *user_data) {
+void spc_mbtn_finished (qk_tap_dance_state_t *state, void *user_data) {
     td_state = cur_dance(state);
     switch (td_state) {
         case SINGLE_TAP:
@@ -191,7 +260,7 @@ void btn1btn2_finished (qk_tap_dance_state_t *state, void *user_data) {
     }
 }
 
-void btn1btn2_reset (qk_tap_dance_state_t *state, void *user_data) {
+void spc_mbtn_reset (qk_tap_dance_state_t *state, void *user_data) {
     switch (td_state) {
         case SINGLE_TAP:
             unregister_code16(KC_BTN1);
@@ -209,41 +278,5 @@ void btn1btn2_reset (qk_tap_dance_state_t *state, void *user_data) {
 
 // Define `ACTION_TAP_DANCE_FN_ADVANCED()` for each tapdance keycode, passing in `finished` and `reset` functions
 qk_tap_dance_action_t tap_dance_actions[] = {
-    [BTN1_BTN2] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, btn1btn2_finished, btn1btn2_reset)
+    [SPC_MBTN] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, spc_mbtn_finished, spc_mbtn_reset)
 };
-
-uint32_t layer_state_set_user(uint32_t state) {
-    print("entering layer_state_set_user\n");
-    switch (biton32(state)) {
-        case _BL:
-            print("base layer\n");
-            rgb_matrix_sethsv_noeeprom(HSV_PURPLE);
-            rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_REACTIVE_SIMPLE);
-            break;
-        case _FL:
-            print("func layer\n");
-            rgb_matrix_sethsv_noeeprom(0, 0, 0);
-            rgb_matrix_mode_noeeprom(RGB_MATRIX_NONE);
-            rgb_matrix_set_color(23, 255, 255, 255);
-            rgb_matrix_set_color(37, 255, 255, 255);
-            rgb_matrix_set_color(38, 255, 255, 255);
-            rgb_matrix_set_color(39, 255, 255, 255);
-            rgb_matrix_set_color(24, 255, 0, 0);
-            rgb_matrix_set_color(53, 255, 0, 0);
-            break;
-        case _ML:
-            print("mouse layer\n");
-            rgb_matrix_sethsv_noeeprom(0, 0, 0);
-            rgb_matrix_mode_noeeprom(RGB_MATRIX_NONE);
-            rgb_matrix_set_color(23, 0, 255, 255);
-            rgb_matrix_set_color(37, 0, 255, 255);
-            rgb_matrix_set_color(38, 0, 255, 255);
-            rgb_matrix_set_color(39, 0, 255, 255);
-            rgb_matrix_set_color(61, 0, 255, 255);
-            break;
-        default:
-            print("default\n");
-            break;
-        }
-    return state;
-}
