@@ -25,6 +25,7 @@ enum alt_layers {
 #define KEY_COLOR_ARROWS RGB_PURPLE
 #define KEY_COLOR_PAGEUPDN RGB_MAGENTA
 #define KEY_COLOR_MOUSE RGB_GOLD
+#define KEY_COLOR_MOUSE_WHEEL RGB_GOLDENROD
 
 #define TG_NKRO MAGIC_TOGGLE_NKRO //Toggle 6KRO / NKRO mode
 
@@ -71,9 +72,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
     [_ML] = LAYOUT(
         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
-        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_MS_U, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_MS_U, KC_WH_U, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_MS_L, KC_MS_D, KC_MS_R, XXXXXXX, XXXXXXX,          XXXXXXX, XXXXXXX, \
-        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,          XXXXXXX, XXXXXXX, \
+        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_WH_D, XXXXXXX, XXXXXXX,          XXXXXXX, XXXXXXX, \
         XXXXXXX, XXXXXXX, _______,                       TD(SPC_MBTN),                            XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX  \
     ),
     
@@ -131,9 +132,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         foreach (uint8_t* key, keys_mouse) {
             rgb_matrix_set_color(*key, KEY_COLOR_MOUSE);
         };
+        uint8_t keys_mousewheel[] = {KL_O, KL_DOT};
+        foreach (uint8_t* key, keys_mousewheel) {
+            rgb_matrix_set_color(*key, KEY_COLOR_MOUSE_WHEEL);
+        };
     } else if (fn_down) {
         uint8_t keys_mouse[] = {KL_I, KL_J, KL_K, KL_L, KL_SPC};
         foreach (uint8_t* key, keys_mouse) {
+            rgb_matrix_set_color(*key, KEY_COLOR_OFF);
+        };
+        uint8_t keys_mousewheel[] = {KL_O, KL_DOT};
+        foreach (uint8_t* key, keys_mousewheel) {
             rgb_matrix_set_color(*key, KEY_COLOR_OFF);
         };
 
