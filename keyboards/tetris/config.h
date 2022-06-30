@@ -8,7 +8,6 @@
 #define DEVICE_VER      0x0001
 #define MANUFACTURER    Fengz
 #define PRODUCT         Tetris
-#define DESCRIPTION     Planck mit
 
 /* key matrix size */
 #define MATRIX_ROWS 5
@@ -31,16 +30,12 @@
 /* Locking resynchronize hack */
 #define LOCKING_RESYNC_ENABLE
 
-#define NO_ACTION_MACRO
-#define NO_ACTION_FUNCTION
-
 #ifdef AUDIO_ENABLE
-  #define B5_AUDIO
+  #define AUDIO_PIN B5
   #define STARTUP_SONG SONG(ONE_UP_SOUND)
   #define NO_MUSIC_MODE
 #endif
 
-#define NUMBER_OF_ENCODERS 2
 #define ENCODERS_PAD_A { D1,F1 }
 #define ENCODERS_PAD_B { D0,F0 }
 
