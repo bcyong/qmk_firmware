@@ -1,0 +1,86 @@
+LED MAPPING RESULTS
+===================
+
+Instructions:
+1. Flash weikav_lucky65v2_bryan_ledtest.bin to your keyboard
+2. Watch as each LED lights up for 1 second
+3. Record which physical key lights up for each LED index
+4. The cycle repeats after LED 69, with a 2-second pause
+
+Format: LED_INDEX -> PHYSICAL_KEY
+
+LED 0 -> Spacebar
+LED 1 -> LALT
+LED 2 -> LGUI
+LED 3 -> LCTRL
+LED 4 -> LSHIFT
+LED 5 -> Z
+LED 6 -> X
+LED 7 -> C
+LED 8 -> V
+LED 9 -> B
+LED 10 -> N
+LED 11 -> M
+LED 12 -> ,
+LED 13 -> .
+LED 14 -> /
+LED 15 -> RSHIFT
+LED 16 -> Up Arrow
+LED 17 -> PgDn
+LED 18 -> Fn
+LED 19 -> RCTRL
+LED 20 -> Left Arrow
+LED 21 -> Down Arrow
+LED 22 -> Right Arrow
+LED 23 -> PgUp
+LED 24 -> Enter
+LED 25 -> Ô
+LED 26 -> ;
+LED 27 -> L
+LED 28 -> K
+LED 29 -> J
+LED 30 -> H
+LED 31 -> G
+LED 32 -> F
+LED 33 -> D
+LED 34 -> S
+LED 35 -> A
+LED 36 -> CapLock
+LED 37 -> Tab
+LED 38 -> Q
+LED 39 -> W
+LED 40 -> E
+LED 41 -> R
+LED 42 -> T
+LED 43 -> Y
+LED 44 -> U
+LED 45 -> I
+LED 46 -> O
+LED 47 -> P
+LED 48 -> [
+LED 49 -> ]
+LED 50 -> \
+LED 51 -> Del
+LED 52 -> Encoder
+LED 53 -> BKSP
+LED 54 -> =
+LED 55 -> -
+LED 56 -> 0
+LED 57 -> 9
+LED 58 -> 8
+LED 59 -> 7
+LED 60 -> 6
+LED 61 -> 5
+LED 62 -> 4
+LED 63 -> 3
+LED 64 -> 2
+LED 65 -> 1
+LED 66 -> Esc
+LED 67 -> 
+LED 68 -> 
+LED 69 -> 
+
+Notes:
+- Use "UNDERGLOW_X" for any underglow/encoder LEDs
+- Use "NONE" if no visible LED lights up
+- Key names: ESC, 1-0, -, =, BSPC, DEL, TAB, Q-P, [, ], \, MUTE, CAPS, A-L, ;, ', ENTER, PGUP, LSHIFT, Z-/, RSHIFT, UP, PGDN, LCTRL, LGUI, LALT, SPACE, RALT, RCTRL, LEFT, DOWN, RIGHT
